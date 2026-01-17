@@ -1,6 +1,6 @@
 # 🚀 Smart CDN with GenAI Control Plane
 
-A production-inspired Content Delivery Network (CDN) with AI-driven optimization, explainability, and smart prefetching. This project demonstrates **how real CDNs like Cloudflare and Akamai separate the data plane (fast) from the control plane (smart)**.
+A Content Delivery Network (CDN) with AI-driven optimization, explainability, and smart prefetching. The architecture separates the data plane (fast request handling) from the control plane (intelligent optimization) for scalable performance.
 
 ## 🎯 Core Philosophy
 
@@ -122,10 +122,6 @@ API Gateway (port 8888) - Unified Interface
 - Exposed via API: `GET /api/explainability/recent`
 - Available as debug headers
 
-**Interview Gold:**
-
-> "I added an explainability layer to make CDN decisions transparent and debuggable, turning a black box into a glass box."
-
 ---
 
 ### 3. Smart Prefetching (Performance Multiplier)
@@ -185,6 +181,26 @@ When /index.html is requested, prefetch /style.css and /script.js
 - 8GB RAM minimum
 - Ports 8000, 8001, 8080, 8888 available
 
+### Configuration
+
+Create a `.env` file in the project root:
+
+```bash
+# OpenAI API Configuration
+OPENAI_API_KEY=your-api-key-here
+
+# GenAI Model (gpt-3.5-turbo or gpt-4)
+GENAI_MODEL=gpt-3.5-turbo
+
+# Analysis interval in seconds (default: 300 = 5 minutes)
+ANALYSIS_INTERVAL_SECONDS=300
+
+# Enable/disable AI features (true/false)
+USE_GENAI_TTL=true
+USE_GENAI_PREFETCH=true
+USE_GENAI_EXPLAIN=true
+```
+
 ### Quick Start
 
 1. **Clone and navigate to project:**
@@ -193,13 +209,15 @@ When /index.html is requested, prefetch /style.css and /script.js
 cd cdn-simulator
 ```
 
-2. **Build and start all services:**
+2. **Configure environment (see Configuration above)**
+
+3. **Build and start all services:**
 
 ```bash
 docker-compose up --build
 ```
 
-3. **Access the dashboard:**
+4. **Access the dashboard:**
 
 ```
 http://localhost:8888
@@ -207,7 +225,7 @@ http://localhost:8888
 
 You'll see an interactive dashboard with all features and endpoints!
 
-4. **Test the CDN:**
+5. **Test the CDN:**
 
 ```bash
 # Make requests through the CDN
@@ -216,7 +234,7 @@ curl -i http://localhost:8080/index.html
 curl -i http://localhost:8080/style.css
 ```
 
-5. **View AI recommendations:**
+6. **View AI recommendations:**
 
 ```bash
 # TTL recommendations
@@ -394,6 +412,23 @@ docker-compose down -v
 docker system prune -a
 ```
 
+### Access Persistent Data
+
+AI-generated configurations are stored locally in the `data/` folder:
+
+```bash
+# View TTL recommendations
+cat data/ttl_config.json
+
+# View prefetch rules
+cat data/prefetch_config.json
+
+# View configuration history
+cat data/config_history.json
+```
+
+These files persist across container restarts and can be edited or backed up directly.
+
 ### Add More Edge Servers
 
 Edit `docker-compose.yml`:
@@ -442,48 +477,13 @@ upstream edge_pool {
 
 ---
 
-## 🎓 Interview-Worthy Talking Points
-
-### 1. Control Plane vs Data Plane
-
-> "I separated the fast path (data plane) from the smart path (control plane), just like production CDNs. GenAI analyzes asynchronously without adding latency."
-
-### 2. Adaptive TTL
-
-> "Instead of static cache durations, my CDN uses AI to adapt TTL based on traffic patterns, reducing origin load and improving efficiency."
-
-### 3. Explainability
-
-> "Every CDN decision has a human-readable explanation. When debugging, you can see exactly why a cache miss occurred or why a particular edge was selected."
-
-### 4. Predictive Prefetching
-
-> "The system learns access patterns and prefetches related assets, reducing perceived latency for users."
-
-### 5. Production-Inspired Architecture
-
-> "This mirrors how Cloudflare and Akamai work - fast edge caching with async ML-driven optimization."
-
----
-
-## 📈 Metrics You Can Demonstrate
-
-After running tests:
-
-1. **Cache Hit Rate Improvement:** Show how hit rate increases over time
-2. **TTL Adaptation:** Demonstrate TTL changes based on traffic
-3. **Pattern Detection:** Show prefetch rules generated from access patterns
-4. **Explainability:** Pull up explanations for specific requests
-5. **Distributed Load:** Show requests distributed across multiple edges
-
----
-
 ## 🧱 Project Structure
 
 ```
 cdn-simulator/
 │
 ├── docker-compose.yml           # Orchestrates all services
+├── .env                         # Configuration (OpenAI key, etc.)
 │
 ├── origin/                      # Origin server
 │   ├── Dockerfile
@@ -494,7 +494,7 @@ cdn-simulator/
 │       ├── style.css
 │       └── script.js
 │
-├── edge-enhanced/               # Enhanced edge servers
+├── edge-enhanced/               # Edge servers with logging
 │   ├── Dockerfile
 │   ├── nginx.conf              # Caching config
 │   ├── log_sender.py           # Sends logs to monitoring
@@ -527,49 +527,13 @@ cdn-simulator/
 │   ├── requirements.txt
 │   └── gateway.py              # API gateway + dashboard
 │
+├── data/                        # Persistent AI data storage
+│   ├── ttl_config.json         # TTL recommendations
+│   ├── prefetch_config.json    # Prefetch rules
+│   └── config_history.json     # Change history
+│
 └── README.md                    # This file
 ```
-
----
-
-## 🎉 What Makes This Project Stand Out
-
-### 1. Production-Inspired Design
-
-✅ Mirrors real CDN architectures (Cloudflare, Akamai)  
-✅ Control plane / data plane separation  
-✅ Asynchronous AI analysis
-
-### 2. Unique Features
-
-✅ Explainability layer (rare in CDNs)  
-✅ Adaptive TTL optimization  
-✅ Pattern-based prefetching
-
-### 3. Interview-Ready
-
-✅ Clear talking points  
-✅ Demonstrable metrics  
-✅ Comprehensive documentation
-
-### 4. Technical Depth
-
-✅ Multi-container orchestration  
-✅ Log aggregation pipeline  
-✅ AI-driven decision making  
-✅ RESTful API design
-
----
-
-## 🔮 Future Enhancements
-
-- [ ] Geographic routing based on client location
-- [ ] Real-time cache invalidation
-- [ ] ML model training for better predictions
-- [ ] WebSocket for live dashboard updates
-- [ ] Prometheus metrics integration
-- [ ] Grafana dashboards
-- [ ] A/B testing different cache strategies
 
 ---
 
@@ -581,15 +545,4 @@ MIT License - Feel free to use this for learning and interviews!
 
 ## 🙏 Acknowledgments
 
-This project demonstrates real-world CDN concepts inspired by:
-
-- Cloudflare's edge network architecture
-- Akamai's adaptive optimization
-- Modern control plane/data plane separation
-- Production ML/AI integration patterns
-
----
-
-**Built with ❤️ to demonstrate production-grade system design**
-
-**Perfect for:** System design interviews • Portfolio projects • Learning CDN architecture • Understanding AI/ML integration in infrastructure
+This project implements real-world CDN concepts inspired by production systems like Cloudflare and Akamai, with a focus on control plane/data plane separation and AI-driven optimization.
