@@ -1,0 +1,96 @@
+services:
+  # Origin Server - Source of truth for content
+  origin:
+    build: ./origin
+    container_name: origin
+    networks:
+      - cdn_network
+
+  # Enhanced Edge Server 1 - with logging and dynamic config
+  edge1:
+    build: ./edge-enhanced
+    container_name: edge1
+    environment:
+      - HOSTNAME=edge1
+      - MONITORING_SERVICE_URL=http://monitoring:8001
+    depends_on:
+      - origin
+      - monitoring
+    networks:
+      - cdn_network
+
+  # Enhanced Edge Server 2 - with logging and dynamic config
+  edge2:
+    build: ./edge-enhanced
+    container_name: edge2
+    environment:
+      - HOSTNAME=edge2
+      - MONITORING_SERVICE_URL=http://monitoring:8001
+    depends_on:
+      - origin
+      - monitoring
+    networks:
+      - cdn_network
+
+  # Load Balancer - distributes traffic across edge servers
+  load-balancer:
+    image: nginx:alpine
+    container_name: load-balancer
+    volumes:
+      - ./load-balancer/nginx.conf:/etc/nginx/nginx.conf
+    ports:
+      - "8080:80"
+    depends_on:
+      - edge1
+      - edge2
+    networks:
+      - cdn_network
+
+  # Monitoring Service - collects logs from edge servers
+  monitoring:
+    build: ./monitoring
+    container_name: monitoring
+    ports:
+      - "8001:8001"
+    networks:
+      - cdn_network
+
+  # GenAI Control Plane - AI-driven optimization engine
+  genai-engine:
+    build: ./control-plane/genai-engine
+    container_name: genai-engine
+    environment:
+      - MONITORING_SERVICE_URL=http://monitoring:8001
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - GENAI_MODEL=${GENAI_MODEL:-gpt-3.5-turbo}
+      - ANALYSIS_INTERVAL_SECONDS=${ANALYSIS_INTERVAL_SECONDS:-300}
+      - USE_GENAI_TTL=${USE_GENAI_TTL:-true}
+      - USE_GENAI_PREFETCH=${USE_GENAI_PREFETCH:-true}
+      - USE_GENAI_EXPLAIN=${USE_GENAI_EXPLAIN:-true}
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./data:/data
+    depends_on:
+      - monitoring
+    networks:
+      - cdn_network
+
+  # API Gateway - unified API for external access
+  api-gateway:
+    build: ./api-gateway
+    container_name: api-gateway
+    environment:
+      - GENAI_URL=http://genai-engine:8000
+      - MONITORING_URL=http://monitoring:8001
+    ports:
+      - "8888:8888"
+    depends_on:
+      - genai-engine
+      - monitoring
+    networks:
+      - cdn_network
+
+networks:
+  cdn_network:
+    driver: bridge
